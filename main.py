@@ -4,15 +4,54 @@
 Autor: Gustavo
 Descripción: Sistema de gestión básica de productos
 """
+# Variables globales
+productos = []
 
 # Sección de la funciones principales
 def agregar_producto():
     '''Agrega un producto'''
-    print("Has seleccionado: Agregar producto")
+    print("\n=== Agregar producto ===")
+
+    # Validar nombre
+    while True:
+        nombre = input("Ingrese el nombre del producto: ").strip()
+        if nombre:
+            break
+        print("❌ El nombre no puede estar vacío.")
+
+    # Validar categoría
+    while True:
+        categoria = input("Ingrese la categoría: ").strip()
+        if categoria:
+            break
+        print("❌ La categoría no puede estar vacía.")
+
+    # Validar precio (entero positivo)
+    while True:
+        try:
+            precio = int(input("Ingrese el precio: "))
+            if precio < 0:
+                print("❌ El precio no puede ser negativo.")
+            else:
+                break
+        except ValueError:
+            print("❌ Error: Debe ingresar un número entero para el precio.")
+
+    # Guardar el producto en la lista
+    producto = [nombre, categoria, precio]
+    productos.append(producto)
+    print(f"✅ Producto '{nombre}' agregado correctamente.")
 
 def mostrar_productos():
     '''Muestra los productos'''
-    print("Has seleccionado: Mostrar productos")
+    print("\n=== Lista de productos ===")
+    if not productos:
+        print("No hay productos registrados.")
+        return
+
+    for i, producto in enumerate(productos, start=1):
+        nombre, categoria, precio = producto
+        print(f"{i}. Nombre: {nombre} | Categoría: {categoria} | Precio: ${precio}")
 
 def buscar_producto():
     '''Búsca un producto'''

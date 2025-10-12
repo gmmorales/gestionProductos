@@ -59,7 +59,30 @@ def buscar_producto():
 
 def eliminar_producto():
     '''Elimina un producto'''
-    print("Has seleccionado: Eliminar producto")
+    print("\n=== Eliminar producto ===")
+
+    # Verificar si hay productos cargados
+    if not productos:
+        print("No hay productos para eliminar.")
+        return
+
+    # Mostrar los productos disponibles
+    for i, producto in enumerate(productos, start=1):
+        nombre, categoria, precio = producto
+        print(f"{i}. Nombre: {nombre} | Categoría: {categoria} | Precio: ${precio}")
+
+    # Pedir el número del producto a eliminar
+    while True:
+        try:
+            indice = int(input("Ingrese el número del producto que desea eliminar: "))
+            if 1 <= indice <= len(productos):
+                producto_eliminado = productos.pop(indice - 1)
+                print(f"✅ Producto '{producto_eliminado[0]}' eliminado correctamente.")
+                break
+            else:
+                print(f"❌ Debe ingresar un número entre 1 y {len(productos)}.")
+        except ValueError:
+            print("❌ Error: Ingrese un número válido.")
 
 def salir():
     '''Salgo de la app'''

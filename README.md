@@ -1,7 +1,7 @@
 # Manual de Operación
 ## Sistema de Gestión Básica de Productos
 
-**Autor:** Gustavo  
+**Autor:** Gustavo M. Morales  
 **Descripción:** Prototipo para agregar, mostrar, buscar y eliminar productos.
 
 ---

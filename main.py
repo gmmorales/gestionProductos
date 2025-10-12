@@ -55,7 +55,29 @@ def mostrar_productos():
 
 def buscar_producto():
     '''Búsca un producto'''
-    print("Has seleccionado: Buscar producto")
+    print("\n=== Buscar producto ===")
+
+    if not productos:
+        print("No hay productos registrados.")
+        return
+
+    # Solicitar el nombre a buscar
+    busqueda = input("Ingrese el nombre del producto a buscar: ").strip().lower()
+
+    # Buscar coincidencias (ignorando mayúsculas/minúsculas)
+    resultados = []
+    for p in productos:
+        if busqueda in p[0].lower():
+            resultados.append(p)
+
+    # Mostrar resultados
+    if resultados:
+        print(f"\nSe encontraron {len(resultados)} resultado(s):")
+        for i, producto in enumerate(resultados, start=1):
+            nombre, categoria, precio = producto
+            print(f"{i}. Nombre: {nombre} | Categoría: {categoria} | Precio: ${precio}")
+    else:
+        print("❌ No se encontraron productos que coincidan con la búsqueda.")
 
 def eliminar_producto():
     '''Elimina un producto'''
@@ -98,7 +120,6 @@ def mostrar_menu():
 
 
 # Método main()
-
 def main():
     while True:
         mostrar_menu()

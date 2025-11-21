@@ -110,6 +110,101 @@ def mostrar_productos():
         print(f"{id_}. Nombre: {nombre} | Desc: {descripcion} | Cantidad: {cantidad} | Precio: ${precio} | Categoría: {categoria}")
 
 
+def editar_producto():
+    """Edita un producto existente por su ID"""
+    print("\n=== Editar producto ===")
+
+    # Mostrar todos los productos antes de editar
+    mostrar_productos()
+
+    # Seleccionar ID
+    while True:
+        try:
+            id_prod = int(input("\nIngrese el ID del producto que desea editar: "))
+            break
+        except ValueError:
+            print("❌ Error: Ingrese un número válido.")
+
+    conn = obtener_conexion()
+    cursor = conn.cursor()
+
+    # Buscar producto
+    cursor.execute("""
+        SELECT id, nombre, descripcion, cantidad, precio, categoria 
+        FROM productos 
+        WHERE id = ?
+    """, (id_prod,))
+    producto = cursor.fetchone()
+
+    if not producto:
+        print("❌ No existe un producto con ese ID.")
+        conn.close()
+        return
+
+    # Datos actuales
+    id_actual, nombre_act, desc_act, cant_act, precio_act, cat_act = producto
+
+    print("\n=== Datos actuales del producto ===")
+    print(f"Nombre: {nombre_act}")
+    print(f"Descripción: {desc_act}")
+    print(f"Cantidad: {cant_act}")
+    print(f"Precio: {precio_act}")
+    print(f"Categoría: {cat_act}")
+
+    print("\nPresiona ENTER para mantener el valor actual.")
+
+    # Nuevo nombre
+    nuevo_nombre = input(f"Nuevo nombre ({nombre_act}): ").strip()
+    if not nuevo_nombre:
+        nuevo_nombre = nombre_act
+
+    # Nueva descripción
+    nueva_desc = input(f"Nueva descripción ({desc_act}): ").strip()
+    if not nueva_desc:
+        nueva_desc = desc_act
+
+    # Nueva categoría
+    nueva_cat = input(f"Nueva categoría ({cat_act}): ").strip()
+    if not nueva_cat:
+        nueva_cat = cat_act
+
+    # Nueva cantidad
+    while True:
+        nueva_cant = input(f"Nueva cantidad ({cant_act}): ").strip()
+        if not nueva_cant:
+            nueva_cant = cant_act
+            break
+        try:
+            nueva_cant = int(nueva_cant)
+            break
+        except ValueError:
+            print("❌ Error: Ingrese un número válido.")
+
+    # Nuevo precio
+    while True:
+        nuevo_precio = input(f"Nuevo precio ({precio_act}): ").strip()
+        if not nuevo_precio:
+            nuevo_precio = precio_act
+            break
+        try:
+            nuevo_precio = float(nuevo_precio)
+            break
+        except ValueError:
+            print("❌ Error: Ingrese un precio válido.")
+
+    # Actualizar en la base
+    cursor.execute("""
+        UPDATE productos
+        SET nombre = ?, descripcion = ?, cantidad = ?, precio = ?, categoria = ?
+        WHERE id = ?
+    """, (nuevo_nombre, nueva_desc, nueva_cant, nuevo_precio, nueva_cat, id_prod))
+
+    conn.commit()
+    conn.close()
+
+    print(f"\n✅ Producto ID {id_prod} actualizado correctamente.")
+
+
 def buscar_producto():
     """Busca productos por nombre"""
     print("\n=== Buscar producto ===")
@@ -177,8 +272,9 @@ def mostrar_menu():
     print("1. Agregar producto")
     print("2. Mostrar productos")
     print("3. Buscar producto")
-    print("4. Eliminar producto")
-    print("5. Salir")
+    print("4. Editar producto")
+    print("5. Eliminar producto")
+    print("6. Salir")
 
 
 # ============================
@@ -198,8 +294,10 @@ def main():
         elif opcion == "3":
             buscar_producto()
         elif opcion == "4":
-            eliminar_producto()
+            editar_producto()
         elif opcion == "5":
+            eliminar_producto()
+        elif opcion == "6":
             salir()
             break
         else:

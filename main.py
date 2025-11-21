@@ -14,7 +14,7 @@ def obtener_conexion():
     """Devuelve una conexión a la base de datos SQLite."""
     return sqlite3.connect("inventario.db")
 
-# Crear tabla si no existe
+# Crear tabla productos si no existe
 def inicializar_bd():
     conn = obtener_conexion()
     cursor = conn.cursor()
@@ -327,6 +327,53 @@ def eliminar_producto():
     print(f"✅ Producto '{producto[0]}' eliminado correctamente.")
 
 
+def reporte_bajo_stock():
+    """Muestra productos con cantidad menor o igual a un límite dado por el usuario."""
+    print("\n=== Reporte de productos con bajo stock ===")
+
+    # Pedir límite
+    while True:
+        try:
+            limite = int(input("Ingrese el límite de cantidad: "))
+            if limite < 0:
+                print("❌ El límite no puede ser negativo.")
+            else:
+                break
+        except ValueError:
+            print("❌ Debe ingresar un número entero válido.")
+
+    conn = obtener_conexion()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, nombre, descripcion, cantidad, precio, categoria
+        FROM productos
+        WHERE cantidad <= ?
+        ORDER BY cantidad ASC
+    """, (limite,))
+
+    resultados = cursor.fetchall()
+    conn.close()
+
+    # Mostrar reporte
+    if not resultados:
+        print(f"\nNo hay productos con cantidad menor o igual a {limite}.")
+        return
+
+    print(f"\nProductos con cantidad <= {limite}:")
+    print("-" * 60)
+
+    for p in resultados:
+        id_, nombre, desc, cant, precio, cat = p
+        print(
+            f"ID: {id_} | Nombre: {nombre} | Cantidad: {cant} | "
+            f"Precio: ${precio} | Categoría: {cat}"
+        )
+
+    print("-" * 60)
+    print(f"Total de productos encontrados: {len(resultados)}")
+
+
 def salir():
     """Salir de la app"""
     print("Saliendo del programa...")
@@ -339,7 +386,8 @@ def mostrar_menu():
     print("3. Buscar producto")
     print("4. Editar producto")
     print("5. Eliminar producto")
-    print("6. Salir")
+    print("6. Reporte de bajo stock")
+    print("7. Salir")
 
 
 # ============================
@@ -350,7 +398,7 @@ def main():
 
     while True:
         mostrar_menu()
-        opcion = input("Selecciona una opción (1-5): ")
+        opcion = input("Selecciona una opción (1-7): ")
 
         if opcion == "1":
             agregar_producto()
@@ -363,6 +411,8 @@ def main():
         elif opcion == "5":
             eliminar_producto()
         elif opcion == "6":
+            reporte_bajo_stock()
+        elif opcion == "7":
             salir()
             break
         else:

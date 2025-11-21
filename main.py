@@ -206,29 +206,94 @@ def editar_producto():
 
 
 def buscar_producto():
-    """Busca productos por nombre"""
+    """Busca productos por ID, nombre o categoría"""
     print("\n=== Buscar producto ===")
+    print("Puede buscar por:")
+    print("1. ID")
+    print("2. Nombre")
+    print("3. Categoría")
 
-    busqueda = input("Ingrese el nombre del producto a buscar: ").strip().lower()
+    opcion = input("Seleccione una opción (1-3): ").strip()
 
     conn = obtener_conexion()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT id, nombre, descripcion, cantidad, precio, categoria
-        FROM productos
-        WHERE LOWER(nombre) LIKE ?
-    """, ('%' + busqueda + '%',))
 
-    resultados = cursor.fetchall()
-    conn.close()
+    # ============================
+    # Buscar por ID
+    # ============================
+    if opcion == "1":
+        try:
+            id_buscar = int(input("Ingrese el ID a buscar: "))
+        except ValueError:
+            print("❌ Debe ingresar un número válido.")
+            conn.close()
+            return
 
-    if resultados:
-        print(f"\nSe encontraron {len(resultados)} resultado(s):")
-        for p in resultados:
-            id_, nombre, descripcion, cantidad, precio, categoria = p
-            print(f"{id_}. Nombre: {nombre} | Desc: {descripcion} | Cantidad: {cantidad} | Precio: ${precio} | Categoría: {categoria}")
+        cursor.execute("""
+            SELECT id, nombre, descripcion, cantidad, precio, categoria
+            FROM productos
+            WHERE id = ?
+        """, (id_buscar,))
+
+        resultado = cursor.fetchone()
+        conn.close()
+
+        if resultado:
+            id_, nombre, desc, cant, precio, cat = resultado
+            print("\n=== Resultado ===")
+            print(f"ID: {id_} | Nombre: {nombre} | Descripción: {desc} | Cantidad: {cant} | Precio: {precio} | Categoría: {cat}")
+        else:
+            print("❌ No se encontró un producto con ese ID.")
+
+    # ============================
+    # Buscar por Nombre
+    # ============================
+    elif opcion == "2":
+        nombre_buscar = input("Ingrese el nombre o parte del nombre: ").strip().lower()
+
+        cursor.execute("""
+            SELECT id, nombre, descripcion, cantidad, precio, categoria
+            FROM productos
+            WHERE LOWER(nombre) LIKE ?
+        """, ('%' + nombre_buscar + '%',))
+
+        resultados = cursor.fetchall()
+        conn.close()
+
+        if resultados:
+            print("\n=== Resultados ===")
+            for p in resultados:
+                id_, nombre, desc, cant, precio, cat = p
+                print(f"{id_}. Nombre: {nombre} | Desc: {desc} | Cantidad: {cant} | Precio: ${precio} | Categoría: {cat}")
+        else:
+            print("❌ No se encontraron productos que coincidan con el nombre.")
+
+    # ============================
+    # Buscar por Categoría
+    # ============================
+    elif opcion == "3":
+        categoria_buscar = input("Ingrese la categoría: ").strip().lower()
+
+        cursor.execute("""
+            SELECT id, nombre, descripcion, cantidad, precio, categoria
+            FROM productos
+            WHERE LOWER(categoria) = ?
+        """, (categoria_buscar,))
+
+        resultados = cursor.fetchall()
+        conn.close()
+
+        if resultados:
+            print("\n=== Resultados ===")
+            for p in resultados:
+                id_, nombre, desc, cant, precio, cat = p
+                print(f"{id_}. Nombre: {nombre} | Desc: {desc} | Cantidad: {cant} | Precio: ${precio} | Categoría: {cat}")
+        else:
+            print("❌ No se encontraron productos en esa categoría.")
+
     else:
-        print("❌ No se encontraron productos que coincidan con la búsqueda.")
+        print("❌ Opción no válida.")
+        conn.close()
 
 
 def eliminar_producto():

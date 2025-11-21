@@ -2,14 +2,41 @@
 # -*- coding: utf-8 -*-
 """
 Autor: Gustavo
-Descripción: Sistema de gestión básica de productos
+Descripción: Sistema de gestión básica de productos con SQLite
 """
-# Variables globales
-productos = []
 
-# Sección de la funciones principales
+import sqlite3
+
+# ================================
+# FUNCIÓN DE CONEXIÓN A LA BASE
+# ================================
+def obtener_conexion():
+    """Devuelve una conexión a la base de datos SQLite."""
+    return sqlite3.connect("inventario.db")
+
+# Crear tabla si no existe
+def inicializar_bd():
+    conn = obtener_conexion()
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS productos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            descripcion TEXT,
+            cantidad INTEGER NOT NULL,
+            precio REAL NOT NULL,
+            categoria TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# ============================================
+# SECCIÓN DE FUNCIONES PRINCIPALES
+# ============================================
+
 def agregar_producto():
-    '''Agrega un producto'''
+    """Agrega un producto a la base de datos"""
     print("\n=== Agregar producto ===")
 
     # Validar nombre
@@ -19,6 +46,8 @@ def agregar_producto():
             break
         print("❌ El nombre no puede estar vacío.")
 
+    descripcion = input("Ingrese la descripción (opcional): ").strip()
+
     # Validar categoría
     while True:
         categoria = input("Ingrese la categoría: ").strip()
@@ -26,89 +55,122 @@ def agregar_producto():
             break
         print("❌ La categoría no puede estar vacía.")
 
-    # Validar precio (entero positivo)
+    # Validar cantidad
     while True:
         try:
-            precio = int(input("Ingrese el precio: "))
+            cantidad = int(input("Ingrese la cantidad: "))
+            if cantidad < 0:
+                print("❌ La cantidad no puede ser negativa.")
+            else:
+                break
+        except ValueError:
+            print("❌ Error: Debe ingresar un número entero para la cantidad.")
+
+    # Validar precio
+    while True:
+        try:
+            precio = float(input("Ingrese el precio: "))
             if precio < 0:
                 print("❌ El precio no puede ser negativo.")
             else:
                 break
         except ValueError:
-            print("❌ Error: Debe ingresar un número entero para el precio.")
+            print("❌ Error: Debe ingresar un número para el precio.")
 
-    # Guardar el producto en la lista
-    producto = [nombre, categoria, precio]
-    productos.append(producto)
+    conn = obtener_conexion()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO productos (nombre, descripcion, cantidad, precio, categoria) VALUES (?, ?, ?, ?, ?)",
+        (nombre, descripcion, cantidad, precio, categoria)
+    )
+
+    conn.commit()
+    conn.close()
+
     print(f"✅ Producto '{nombre}' agregado correctamente.")
 
+
 def mostrar_productos():
-    '''Muestra los productos'''
+    """Muestra todos los productos"""
     print("\n=== Lista de productos ===")
+
+    conn = obtener_conexion()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, nombre, descripcion, cantidad, precio, categoria FROM productos")
+    productos = cursor.fetchall()
+    conn.close()
+
     if not productos:
         print("No hay productos registrados.")
         return
 
-    for i, producto in enumerate(productos, start=1):
-        nombre, categoria, precio = producto
-        print(f"{i}. Nombre: {nombre} | Categoría: {categoria} | Precio: ${precio}")
+    for p in productos:
+        id_, nombre, descripcion, cantidad, precio, categoria = p
+        print(f"{id_}. Nombre: {nombre} | Desc: {descripcion} | Cantidad: {cantidad} | Precio: ${precio} | Categoría: {categoria}")
+
 
 def buscar_producto():
-    '''Búsca un producto'''
+    """Busca productos por nombre"""
     print("\n=== Buscar producto ===")
 
-    if not productos:
-        print("No hay productos registrados.")
-        return
-
-    # Solicitar el nombre a buscar
     busqueda = input("Ingrese el nombre del producto a buscar: ").strip().lower()
 
-    # Buscar coincidencias (ignorando mayúsculas/minúsculas)
-    resultados = []
-    for p in productos:
-        if busqueda in p[0].lower():
-            resultados.append(p)
+    conn = obtener_conexion()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, nombre, descripcion, cantidad, precio, categoria
+        FROM productos
+        WHERE LOWER(nombre) LIKE ?
+    """, ('%' + busqueda + '%',))
 
-    # Mostrar resultados
+    resultados = cursor.fetchall()
+    conn.close()
+
     if resultados:
         print(f"\nSe encontraron {len(resultados)} resultado(s):")
-        for i, producto in enumerate(resultados, start=1):
-            nombre, categoria, precio = producto
-            print(f"{i}. Nombre: {nombre} | Categoría: {categoria} | Precio: ${precio}")
+        for p in resultados:
+            id_, nombre, descripcion, cantidad, precio, categoria = p
+            print(f"{id_}. Nombre: {nombre} | Desc: {descripcion} | Cantidad: {cantidad} | Precio: ${precio} | Categoría: {categoria}")
     else:
         print("❌ No se encontraron productos que coincidan con la búsqueda.")
 
+
 def eliminar_producto():
-    '''Elimina un producto'''
+    """Elimina un producto por ID"""
     print("\n=== Eliminar producto ===")
 
-    # Verificar si hay productos cargados
-    if not productos:
-        print("No hay productos para eliminar.")
-        return
+    mostrar_productos()
 
-    # Mostrar los productos disponibles
-    for i, producto in enumerate(productos, start=1):
-        nombre, categoria, precio = producto
-        print(f"{i}. Nombre: {nombre} | Categoría: {categoria} | Precio: ${precio}")
-
-    # Pedir el número del producto a eliminar
     while True:
         try:
-            indice = int(input("Ingrese el número del producto que desea eliminar: "))
-            if 1 <= indice <= len(productos):
-                producto_eliminado = productos.pop(indice - 1)
-                print(f"✅ Producto '{producto_eliminado[0]}' eliminado correctamente.")
-                break
-            else:
-                print(f"❌ Debe ingresar un número entre 1 y {len(productos)}.")
+            id_prod = int(input("Ingrese el ID del producto a eliminar: "))
+            break
         except ValueError:
             print("❌ Error: Ingrese un número válido.")
 
+    conn = obtener_conexion()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT nombre FROM productos WHERE id = ?", (id_prod,))
+    producto = cursor.fetchone()
+
+    if not producto:
+        print("❌ No existe un producto con ese ID.")
+        conn.close()
+        return
+
+    cursor.execute("DELETE FROM productos WHERE id = ?", (id_prod,))
+    conn.commit()
+    conn.close()
+
+    print(f"✅ Producto '{producto[0]}' eliminado correctamente.")
+
+
 def salir():
-    '''Salgo de la app'''
+    """Salir de la app"""
     print("Saliendo del programa...")
+
 
 def mostrar_menu():
     print("\n===== MENÚ PRINCIPAL =====")
@@ -119,12 +181,15 @@ def mostrar_menu():
     print("5. Salir")
 
 
-# Método main()
+# ============================
+# MÉTODO MAIN()
+# ============================
 def main():
+    inicializar_bd()  # Crear la tabla si no existe
+
     while True:
         mostrar_menu()
         opcion = input("Selecciona una opción (1-5): ")
-
 
         if opcion == "1":
             agregar_producto()
